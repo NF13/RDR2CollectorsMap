@@ -18,9 +18,8 @@ var Routes = {
 	var solution = solveSalesman(points);
 	var orderedPoints = solution.map(i => points[i]);
 	$.each(orderedPoints, function(_index, point) {
-	connections.push([point.x, point.y]);
+		connections.push([point.x, point.y]);
 	});
-	connections.push(connections[0]);
 	
 	
     if (polylines instanceof L.Polyline) {
