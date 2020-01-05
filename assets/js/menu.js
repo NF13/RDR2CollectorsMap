@@ -7,59 +7,94 @@ var Menu = {
     $(menu).children().sort(function (a, b) {
       return a.textContent.localeCompare(b.textContent);
     }).appendTo(menu);
+  },
+  refreshTreasures: function(){
+    $('.menu-hidden[data-type=treasure]').children('.collectible-wrapper').remove();
+
+    Treasures.data.filter(function (item) {
+      var collectibleElement = $('<div>').addClass('collectible-wrapper').attr('data-type', item.text);
+      var collectibleTextElement = $('<p>').addClass('collectible').text(Language.get(item.text));
+
+      if(!Treasures.enabledTreasures.includes(item.text))
+        collectibleElement.addClass('disabled');
+
+      $('.menu-hidden[data-type=treasure]').append(collectibleElement.append(collectibleTextElement));
+    });
   }
 };
+
 Menu.refreshMenu = function () {
-  $.each(categories, function (key, category) {
+  var weeklyItems = weeklySetData.sets[weeklySetData.current];
 
-    $('.menu-hidden[data-type=' + category + ']').children('p.collectible').remove();
+  $.each(MapBase.markers, function (_key, marker) {
+    if(marker.day == Cycles.data.cycles[Cycles.data.current][marker.category]) {
+      if (marker.subdata) {
+        //This is for items with subdata to merge them
+        if ($(`.menu-hidden[data-type=${marker.category}]`).children(`[data-type=${marker.subdata}]`).length > 0)
+          return;
 
-    if (categoriesDisabledByDefault.includes(category))
-      $('.menu-option.clickable[data-type=' + category + ']').children('span').addClass('disabled');
+        var collectibleImage = null;
+        var collectibleName = null;
 
-    $.each(markers, function (_key, marker) {
-      if (marker.day == Cycles.data.cycles[currentCycle][category] && marker.category == category) {
-        if (marker.subdata) {
-          //This is for items with subdata to merge them
-          //TODO: create a 'marker' to subdata with item amount
-          if ($(`.menu-hidden[data-type=${category}]`).children(`p.collectible[data-type=${marker.subdata}]`).length > 0)
-            return;
+        if (marker.category == 'american_flowers') {
+          collectibleImage = $('<img>').attr('src', `./assets/images/icons/game/flower_${marker.subdata}.png`).addClass('collectible-icon');
+          collectibleName = Language.get(`flower_${marker.subdata}.name`);
+        } else if (marker.category == 'bird_eggs') {
+          collectibleImage = $('<img>').attr('src', `./assets/images/icons/game/egg_${marker.subdata}.png`).addClass('collectible-icon');
+          collectibleName = Language.get(`egg_${marker.subdata}.name`);
+        }
 
-          var collectibleElement = $('<p>').addClass('collectible').attr('data-type', marker.subdata).text(Language.get(`${marker.text}.name`).split('#')[0]);
-          var collectibleCountElement = $('<small>').addClass('counter').text(marker.amount);
+        var collectibleElement = $('<div>').addClass('collectible-wrapper').attr('data-type', marker.subdata);
+        var collectibleTextElement = $('<p>').addClass('collectible').text(collectibleName);
+        var collectibleCountElement = Inventory.isEnabled ? $('<small>').addClass('counter').text(marker.amount) : '';
 
-          $('.menu-hidden[data-type=' + marker.category + ']').append(collectibleElement.append(collectibleCountElement));
-          if (marker.amount == 10) {       
-            $(`p[data-type=${marker.subdata}]`).addClass('disabled');
+        $('.menu-hidden[data-type=' + marker.category + ']').append(collectibleElement.append(collectibleImage).append(collectibleTextElement.append(collectibleCountElement)));
+
+        if (marker.amount == 10)
+          $(`[data-type=${marker.subdata}]`).addClass('disabled');
+
+        if (marker.lat.length == 0)
+          $(`[data-type=${marker.subdata}]`).addClass('not-found');
+
+        //set green color of weekly collection items (flowers and eggs)
+        for (var i = 0, weeklyItemsLength = weeklyItems.length; i < weeklyItemsLength; i++) {
+          if ((`flower_${marker.subdata}`) == weeklyItems[i].item || (`egg_${marker.subdata}`) == weeklyItems[i].item) {
+            $(`[data-type=${marker.subdata}]`).addClass('weekly-item');
           }
         }
-        else {
-          //All others items
-          var collectibleElement = $('<p>').addClass('collectible').attr('data-type', marker.text).text(marker.title);
-          var buttonsElement = $('div').addClass('');
-          var collectibleCountElement = $('<small>').addClass('counter').text(marker.amount);
-          $(`.menu-hidden[data-type=${category}]`).append(collectibleElement.append(collectibleCountElement));
+      } else {
+        //All others items
+        var collectibleImage = null;
 
-          if(marker.lat.length == 0)
-            $(`[data-type=${marker.text}]`).addClass('not-found');
+        // Prevents 404 errors. If doing the if-statement the other way round, jQuery tries to load the images.
+        if (marker.category != 'random')
+          collectibleImage = $('<img>').attr('src', `./assets/images/icons/game/${marker.text}.png`).addClass('collectible-icon');
 
-          if (!marker.canCollect) {            
-            $(`[data-type=${marker.text}]`).addClass('disabled');
+        var collectibleElement = $('<div>').addClass('collectible-wrapper').attr('data-type', marker.text);
+        var collectibleTextElement = $('<p>').addClass('collectible').text(marker.title);
+        var collectibleCountElement = Inventory.isEnabled ? $('<small>').addClass('counter').text(marker.amount) : '';
+
+        $(`.menu-hidden[data-type=${marker.category}]`).append(collectibleElement.append(collectibleImage).append(collectibleTextElement.append(collectibleCountElement)));
+
+        if (marker.lat.length == 0)
+          $(`[data-type=${marker.text}]`).addClass('not-found');
+
+        if (!marker.canCollect)
+          $(`[data-type=${marker.text}]`).addClass('disabled');
+
+        // set green color of weekly collection items (other items)
+        for (var i = 0, weeklyItemsLength = weeklyItems.length; i < weeklyItemsLength; i++) {
+          if ((marker.text) == weeklyItems[i].item) {
+            $(`[data-type=${marker.text}]`).addClass('weekly-item');
           }
         }
       }
-    });
-    $('.menu-hidden[data-type=treasure]').children('p.collectible').remove();
-
-    treasureData.filter(function (item) {
-      $('.menu-hidden[data-type=treasure]').append('<p class="collectible disabled" data-type="' + item.text + '">' + Language.get(item.text) + '</p>');
-    });
+    }
   });
- 
+  Menu.refreshTreasures();  
   $.each(categoriesDisabledByDefault, function (key, value) {
     if (value.length > 0) {
-      $('span[data-type=' + value + ']').addClass('disabled');
-      $('p[data-type=' + value + ']').addClass('disabled');
+      $('[data-type=' + value + ']').addClass('disabled');
     }
   });
 
@@ -68,7 +103,8 @@ Menu.refreshMenu = function () {
 
 Menu.showAll = function () {
   $.each(categoryButtons, function (key, value) {
-    $(value).children('span').removeClass("disabled")
+    $(value).removeClass("disabled");
+    $(`.menu-hidden[data-type=${$(value).attr('data-type')}]`).removeClass("disabled");
   });
   enabledCategories = categories;
   MapBase.addMarkers();
@@ -76,7 +112,9 @@ Menu.showAll = function () {
 
 Menu.hideAll = function () {
   $.each(categoryButtons, function (key, value) {
-    $(value).children('span').addClass("disabled")
+    $(value).addClass("disabled");
+    $(`.menu-hidden[data-type=${$(value).attr('data-type')}]`).addClass("disabled");
+    console.log($(value).attr('data-type'));
   });
 
   enabledCategories = [];
@@ -86,8 +124,20 @@ Menu.hideAll = function () {
 };
 
 Menu.refreshItemsCounter = function () {
-  
+
   $('.collectables-counter').text(Language.get('menu.collectables_counter')
-    .replace('{count}', markers.filter(item => item.day == Cycles.data.cycles[currentCycle][item.category] && item.isVisible && (item.isCollected || item.amount == 10)).length)
-    .replace('{max}', markers.filter(item => item.day == Cycles.data.cycles[currentCycle][item.category] && item.isVisible).length));
+    .replace('{count}', MapBase.markers.filter(item => item.day == Cycles.data.cycles[Cycles.data.current][item.category] && item.isVisible && (item.isCollected || item.amount == 10)).length)
+    .replace('{max}', MapBase.markers.filter(item => item.day == Cycles.data.cycles[Cycles.data.current][item.category] && item.isVisible).length));
 };
+
+// Auto fill debug markers inputs, when "show coordinates on click" is enabled
+Menu.liveUpdateDebugMarkersInputs = function (lat, lng) {
+  $('#debug-marker-lat').val(lat);
+  $('#debug-marker-lng').val(lng);
+}
+// Auto remove debug markers coordinates when "show coordinates on click" is disabled
+$('#show-coordinates').on('change', function () {
+  $('#debug-marker-lat').val('');
+  $('#debug-marker-lng').val('');
+  $('#debug-marker-name').val('');
+});

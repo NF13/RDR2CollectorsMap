@@ -40,6 +40,8 @@
 	{"key": "menu.fast_travel", "value": "빠른 이동"},
 	{"key": "menu.search_placeholder", "value": "아이템 검색. ;로 구분합니다"},
 	{"key": "map.remove_add", "value": "지도로부터 지우기/추가하기"},
+	{"key": "map.flower_type.night_only", "value": "늦은 밤 - 오후10시~오전5시"},
+	{"key": "map.flower_type.bush", "value": "This flower grows on a bush."},
 	{"key": "menu.collectables_value", "value": "값"},
 	{"key": "menu.custom_routes", "value": "커스텀 경로"},
 	{"key": "menu.import_route", "value": "경로 불러오기"},
@@ -67,5 +69,6 @@
 	{"key": "menu.sell", "value": "팔기"},
 	{"key": "menu.inventory", "value": "인벤토리"},
 	{"key": "menu.enable_inventory", "value": "인벤토리 사용"},
-	{"key": "menu.inventory_stack", "value": "아이템 쌓기 개수"}
+	{"key": "menu.inventory_stack", "value": "아이템 쌓기 개수"},
+	{"key": "menu.marker_cluster", "value": "Markers cluster"}
 ]
